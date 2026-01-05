@@ -18,10 +18,24 @@ const LoginPage = () => {
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (data) => {
-      setAuth(data.user, data.token)
-      navigate('/dashboard')
+    onSuccess: (response) => {
+      console.log('Login response:', response)
+      // Backend returns: { message, user, accessToken, refreshToken }
+      const token = response.accessToken || response.token
+      const user = response.user
+      
+      if (token && user) {
+        console.log('Setting auth with:', { user, token })
+        setAuth(user, token)
+        console.log('Navigating to dashboard...')
+        navigate('/dashboard', { replace: true })
+      } else {
+        console.error('Missing token or user in response:', response)
+      }
     },
+    onError: (error) => {
+      console.error('Login error:', error)
+    }
   })
 
   const onSubmit = (data) => {
