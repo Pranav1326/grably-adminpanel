@@ -8,7 +8,8 @@ import {
   Bell, 
   LogOut,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  PackageCheck
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 
@@ -40,7 +41,8 @@ const Sidebar = () => {
     <aside className="w-64 bg-white border-r border-secondary-200">
       <div className="h-full flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-secondary-200">
+        <div className="h-16 flex items-center px-6 border-b border-secondary-200 gap-3">
+          <PackageCheck size={28} className="text-primary-600" />
           <h1 className="text-2xl font-bold text-primary-600">Grably</h1>
         </div>
         
