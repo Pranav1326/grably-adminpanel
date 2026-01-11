@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  useReactTable, 
-  getCoreRowModel, 
+import {
+  useReactTable,
+  getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  flexRender 
+  flexRender
 } from '@tanstack/react-table'
-import { Search, Plus, Edit, Trash2, Ban, CheckCircle, Users } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Ban, CheckCircle, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { usersApi } from '../api/users'
+import { adminsApi } from '../api/users'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
@@ -19,36 +19,36 @@ import Modal from '../components/ui/Modal'
 import { Input } from '../components/forms'
 import { useForm } from 'react-hook-form'
 
-const UsersPage = () => {
+const AdminsPage = () => {
   const queryClient = useQueryClient()
   const [globalFilter, setGlobalFilter] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedAdmin, setSelectedAdmin] = useState(null)
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => usersApi.getUsers(),
+    queryKey: ['admins'],
+    queryFn: () => adminsApi.getAdmins(),
   })
 
   const toggleStatusMutation = useMutation({
-    mutationFn: usersApi.toggleUserStatus,
+    mutationFn: adminsApi.toggleAdminStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User status updated successfully')
+      queryClient.invalidateQueries(['admins'])
+      toast.success('Admin status updated successfully')
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to update user status')
+      toast.error(error.message || 'Failed to update admin status')
     },
   })
 
-  const deleteUserMutation = useMutation({
-    mutationFn: usersApi.deleteUser,
+  const deleteAdminMutation = useMutation({
+    mutationFn: adminsApi.deleteAdmin,
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User deleted successfully')
+      queryClient.invalidateQueries(['admins'])
+      toast.success('Admin deleted successfully')
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to delete user')
+      toast.error(error.message || 'Failed to delete admin')
     },
   })
 
@@ -56,21 +56,20 @@ const UsersPage = () => {
     {
       accessorKey: 'id',
       header: 'ID',
-      cell: ({ row }) => <span className="font-mono text-sm">{row.index+1}</span>,
+      cell: ({ row }) => <span className="font-mono text-sm">{row.index + 1}</span>,
     },
     {
       accessorKey: 'name',
       header: 'Name',
       cell: ({ row }) => (
-        <div>
-          <p className="font-medium text-secondary-900">{row.original.name}</p>
-          <p className="text-xs text-secondary-500">{row.original.email}</p>
+        <div className="flex items-center gap-2">
+          <Shield size={16} className="text-primary-600" />
+          <div>
+            <p className="font-medium text-secondary-900">{row.original.name}</p>
+            <p className="text-xs text-secondary-500">{row.original.email}</p>
+          </div>
         </div>
       ),
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
     },
     {
       accessorKey: 'isActive',
@@ -93,7 +92,7 @@ const UsersPage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setSelectedUser(row.original)
+              setSelectedAdmin(row.original)
               setIsModalOpen(true)
             }}
             className="p-1 text-primary-600 hover:bg-primary-50 rounded"
@@ -108,8 +107,8 @@ const UsersPage = () => {
           </button>
           <button
             onClick={() => {
-              if (confirm('Are you sure you want to delete this user?')) {
-                deleteUserMutation.mutate(row.original.id)
+              if (window.confirm('Are you sure you want to delete this admin?')) {
+                deleteAdminMutation.mutate(row.original.id)
               }
             }}
             className="p-1 text-red-600 hover:bg-red-50 rounded"
@@ -122,37 +121,39 @@ const UsersPage = () => {
   ]
 
   const table = useReactTable({
-    data: usersData?.users,
+    data: usersData?.admins || [],
     columns,
-    state: {
-      globalFilter,
-    },
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
+    state: {
+      globalFilter,
     },
+    onGlobalFilterChange: setGlobalFilter,
   })
 
   if (isLoading) {
-    return <Loader className="h-64" />
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className='flex items-start justify-start gap-3'>
-          <Users size={32} className="text-primary-600" />
-          <h1 className="text-3xl font-bold text-secondary-900">Users</h1>
+        <div className="flex items-center gap-3">
+          <Shield size={32} className="text-primary-600" />
+          <h1 className="text-3xl font-bold text-secondary-900">Administrators</h1>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Add User
+        <Button onClick={() => {
+          setSelectedAdmin(null)
+          setIsModalOpen(true)
+        }}>
+          <Plus size={20} />
+          Add Admin
         </Button>
       </div>
 
@@ -232,110 +233,92 @@ const UsersPage = () => {
         </div>
       </Card>
 
-      {/* User Form Modal */}
-      <UserFormModal
+      {/* Add/Edit Modal */}
+      <Modal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
-          setSelectedUser(null)
+          setSelectedAdmin(null)
         }}
-        user={selectedUser}
-      />
+        title={selectedAdmin ? 'Edit Administrator' : 'Add Administrator'}
+      >
+        <AdminForm
+          admin={selectedAdmin}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedAdmin(null)
+          }}
+        />
+      </Modal>
     </div>
   )
 }
 
-// User Form Modal Component
-const UserFormModal = ({ isOpen, onClose, user }) => {
+const AdminForm = ({ admin, onClose }) => {
   const queryClient = useQueryClient()
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm({
-    defaultValues: user || {},
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: admin || {}
   })
 
-  const createMutation = useMutation({
-    mutationFn: usersApi.createUser,
+  const mutation = useMutation({
+    mutationFn: (data) => {
+      if (admin) {
+        return adminsApi.updateAdmin(admin.id, { ...data })
+      }
+      return adminsApi.createAdmin({ ...data })
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User created successfully')
+      queryClient.invalidateQueries(['admins'])
+      toast.success(admin ? 'Admin updated successfully' : 'Admin created successfully')
       onClose()
-      reset()
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to create user')
-    },
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => usersApi.updateUser(user.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User updated successfully')
-      onClose()
-      reset()
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update user')
+      toast.error(error.message || `Failed to ${admin ? 'update' : 'create'} admin`)
     },
   })
 
   const onSubmit = (data) => {
-    if (user) {
-      updateMutation.mutate(data)
-    } else {
-      createMutation.mutate(data)
-    }
+    mutation.mutate(data)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Add New User'}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Name"
-          name="name"
-          register={register}
-          error={errors.name}
-          required
-        />
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          register={register}
-          error={errors.email}
-          required
-        />
-        <Input
-          label="Phone"
-          name="phone"
-          register={register}
-          error={errors.phone}
-        />
-        {!user && (
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            register={register}
-            error={errors.password}
-            required
-          />
-        )}
-        <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
-            {user ? 'Update' : 'Create'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        label="Name"
+        {...register('name', { required: 'Name is required' })}
+        error={errors.name?.message}
+      />
+      <Input
+        label="Email"
+        type="email"
+        {...register('email', { required: 'Email is required' })}
+        error={errors.email?.message}
+      />
+      <Input
+        label="Phone"
+        {...register('phone', { required: 'Phone is required' })}
+        error={errors.phone?.message}
+      />
+      <Input
+        label="Password"
+        type="password"
+        {...register('password', {
+          required: admin ? false : 'Password is required',
+          minLength: { value: 6, message: 'Password must be at least 6 characters' }
+        })}
+        error={errors.password?.message}
+        placeholder={admin ? 'Leave blank to keep current password' : ''}
+      />
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving...' : 'Save'}
+        </Button>
+      </div>
+    </form>
   )
 }
 
-export default UsersPage
+export default AdminsPage

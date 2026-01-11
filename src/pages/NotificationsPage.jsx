@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Send } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { notificationsApi } from '../api/notifications'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -20,16 +21,22 @@ const NotificationsPage = () => {
   const sendNotificationMutation = useMutation({
     mutationFn: notificationsApi.sendNotification,
     onSuccess: () => {
-      alert('Notification sent successfully!')
+      toast.success('Notification sent successfully!')
       reset()
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to send notification')
     },
   })
 
   const sendEmailMutation = useMutation({
     mutationFn: notificationsApi.sendEmail,
     onSuccess: () => {
-      alert('Email sent successfully!')
+      toast.success('Email sent successfully!')
       reset()
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to send email')
     },
   })
 

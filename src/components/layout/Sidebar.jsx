@@ -1,25 +1,35 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { 
   LayoutDashboard, 
   Users, 
   Store, 
   ShoppingBag, 
   Bell, 
-  LogOut 
+  LogOut,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 
 const menuItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/users', icon: Users, label: 'Users' },
   { path: '/shops', icon: Store, label: 'Shops' },
   { path: '/orders', icon: ShoppingBag, label: 'Orders' },
   { path: '/notifications', icon: Bell, label: 'Notifications' },
 ]
 
+const userMenuItems = [
+  { path: '/users', label: 'Users' },
+  { path: '/shopkeepers', label: 'Shopkeepers' },
+  { path: '/admins', label: 'Admins' },
+]
+
 const Sidebar = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const clearAuth = useAuthStore((state) => state.clearAuth)
+  const [isUsersDropdownOpen, setIsUsersDropdownOpen] = useState(false)
   
   const handleLogout = () => {
     clearAuth()
@@ -55,6 +65,42 @@ const Sidebar = () => {
               </NavLink>
             )
           })}
+          
+          {/* Users Dropdown */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setIsUsersDropdownOpen(!isUsersDropdownOpen)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors w-full ${
+                userMenuItems.some(item => location.pathname === item.path)
+                  ? 'bg-primary-50 text-primary-700 font-medium'
+                  : 'text-secondary-600 hover:bg-secondary-100'
+              }`}
+            >
+              <Users size={20} />
+              <span className="flex-1 text-left">Users</span>
+              {isUsersDropdownOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            
+            {isUsersDropdownOpen && (
+              <div className="ml-4 space-y-1">
+                {userMenuItems.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm ${
+                        isActive
+                          ? 'bg-primary-50 text-primary-700 font-medium'
+                          : 'text-secondary-600 hover:bg-secondary-100'
+                      }`
+                    }
+                  >
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
         
         {/* Logout */}

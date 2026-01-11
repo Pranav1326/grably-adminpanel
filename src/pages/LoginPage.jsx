@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { Input, FormError } from '../components/forms'
@@ -25,18 +26,22 @@ const LoginPage = () => {
       
       if (token && user) {
         setAuth(user, token)
+        toast.success('Login successful! Welcome back.')
         navigate('/dashboard', { replace: true })
       } else {
         console.error('Missing token or user in response:', response)
+        toast.error('Login failed. Please try again.')
       }
     },
     onError: (error) => {
       console.error('Login error:', error)
+      toast.error(error.response?.data?.message || 'Invalid credentials. Please try again.')
     }
   })
 
   const onSubmit = (data, event) => {
     event?.preventDefault()
+    console.log('Submitting login form with data:', data)
     loginMutation.mutate(data)
   }
 
@@ -63,22 +68,18 @@ const LoginPage = () => {
           <div className="space-y-4">
             <Input
               label="Email"
-              name="email"
               type="email"
               placeholder="admin@example.com"
-              register={register}
-              error={errors.email}
-              required
+              {...register('email', { required: 'Email is required' })}
+              error={errors.email?.message}
             />
             
             <Input
               label="Password"
-              name="password"
               type="password"
               placeholder="••••••••"
-              register={register}
-              error={errors.password}
-              required
+              {...register('password', { required: 'Password is required' })}
+              error={errors.password?.message}
             />
           </div>
 

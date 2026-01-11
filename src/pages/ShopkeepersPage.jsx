@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  useReactTable, 
-  getCoreRowModel, 
+import {
+  useReactTable,
+  getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   getFilteredRowModel,
-  flexRender 
+  flexRender
 } from '@tanstack/react-table'
-import { Search, Plus, Edit, Trash2, Ban, CheckCircle, Users } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Ban, CheckCircle, BadgeIndianRupee } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { usersApi } from '../api/users'
+import { shopkeepersApi } from '../api/users'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
@@ -19,36 +19,36 @@ import Modal from '../components/ui/Modal'
 import { Input } from '../components/forms'
 import { useForm } from 'react-hook-form'
 
-const UsersPage = () => {
+const ShopkeepersPage = () => {
   const queryClient = useQueryClient()
   const [globalFilter, setGlobalFilter] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedShopkeeper, setSelectedShopkeeper] = useState(null)
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => usersApi.getUsers(),
+    queryKey: ['shopkeepers'],
+    queryFn: () => shopkeepersApi.getShopkeepers(),
   })
 
   const toggleStatusMutation = useMutation({
-    mutationFn: usersApi.toggleUserStatus,
+    mutationFn: shopkeepersApi.toggleShopkeeperStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User status updated successfully')
+      queryClient.invalidateQueries(['shopkeepers'])
+      toast.success('Shopkeeper status updated successfully')
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to update user status')
+      toast.error(error.message || 'Failed to update shopkeeper status')
     },
   })
 
-  const deleteUserMutation = useMutation({
-    mutationFn: usersApi.deleteUser,
+  const deleteShopkeeperMutation = useMutation({
+    mutationFn: shopkeepersApi.deleteShopkeeper,
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User deleted successfully')
+      queryClient.invalidateQueries(['shopkeepers'])
+      toast.success('Shopkeeper deleted successfully')
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to delete user')
+      toast.error(error.message || 'Failed to delete shopkeeper')
     },
   })
 
@@ -56,7 +56,7 @@ const UsersPage = () => {
     {
       accessorKey: 'id',
       header: 'ID',
-      cell: ({ row }) => <span className="font-mono text-sm">{row.index+1}</span>,
+      cell: ({ row }) => <span className="font-mono text-sm">{row.index + 1}</span>,
     },
     {
       accessorKey: 'name',
@@ -93,7 +93,7 @@ const UsersPage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setSelectedUser(row.original)
+              setSelectedShopkeeper(row.original)
               setIsModalOpen(true)
             }}
             className="p-1 text-primary-600 hover:bg-primary-50 rounded"
@@ -108,8 +108,8 @@ const UsersPage = () => {
           </button>
           <button
             onClick={() => {
-              if (confirm('Are you sure you want to delete this user?')) {
-                deleteUserMutation.mutate(row.original.id)
+              if (window.confirm('Are you sure you want to delete this shopkeeper?')) {
+                deleteShopkeeperMutation.mutate(row.original.id)
               }
             }}
             className="p-1 text-red-600 hover:bg-red-50 rounded"
@@ -122,37 +122,39 @@ const UsersPage = () => {
   ]
 
   const table = useReactTable({
-    data: usersData?.users,
+    data: usersData?.shopkeepers || [],
     columns,
-    state: {
-      globalFilter,
-    },
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
+    state: {
+      globalFilter,
     },
+    onGlobalFilterChange: setGlobalFilter,
   })
 
   if (isLoading) {
-    return <Loader className="h-64" />
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className='flex items-start justify-start gap-3'>
-          <Users size={32} className="text-primary-600" />
-          <h1 className="text-3xl font-bold text-secondary-900">Users</h1>
+          <BadgeIndianRupee size={32} className="text-primary-600" />
+          <h1 className="text-3xl font-bold text-secondary-900">Shopkeepers</h1>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus size={20} className="mr-2" />
-          Add User
+        <Button onClick={() => {
+          setSelectedShopkeeper(null)
+          setIsModalOpen(true)
+        }}>
+          <Plus size={20} />
+          Add Shopkeeper
         </Button>
       </div>
 
@@ -232,110 +234,90 @@ const UsersPage = () => {
         </div>
       </Card>
 
-      {/* User Form Modal */}
-      <UserFormModal
+      {/* Add/Edit Modal */}
+      <Modal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false)
-          setSelectedUser(null)
+          setSelectedShopkeeper(null)
         }}
-        user={selectedUser}
-      />
+        title={selectedShopkeeper ? 'Edit Shopkeeper' : 'Add Shopkeeper'}
+      >
+        <ShopkeeperForm
+          shopkeeper={selectedShopkeeper}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedShopkeeper(null)
+          }}
+        />
+      </Modal>
     </div>
   )
 }
 
-// User Form Modal Component
-const UserFormModal = ({ isOpen, onClose, user }) => {
+const ShopkeeperForm = ({ shopkeeper, onClose }) => {
   const queryClient = useQueryClient()
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm({
-    defaultValues: user || {},
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: shopkeeper || {}
   })
 
-  const createMutation = useMutation({
-    mutationFn: usersApi.createUser,
+  const mutation = useMutation({
+    mutationFn: (data) => {
+      if (shopkeeper) {
+        return shopkeepersApi.updateShopkeeper(shopkeeper.id, { ...data })
+      }
+      return shopkeepersApi.createShopkeeper({ ...data })
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User created successfully')
+      queryClient.invalidateQueries(['shopkeepers'])
+      toast.success(shopkeeper ? 'Shopkeeper updated successfully' : 'Shopkeeper created successfully')
       onClose()
-      reset()
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to create user')
-    },
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => usersApi.updateUser(user.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['users'])
-      toast.success('User updated successfully')
-      onClose()
-      reset()
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update user')
+      toast.error(error.message || `Failed to ${shopkeeper ? 'update' : 'create'} shopkeeper`)
     },
   })
 
   const onSubmit = (data) => {
-    if (user) {
-      updateMutation.mutate(data)
-    } else {
-      createMutation.mutate(data)
-    }
+    mutation.mutate(data)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={user ? 'Edit User' : 'Add New User'}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        label="Name"
+        {...register('name', { required: 'Name is required' })}
+        error={errors.name?.message}
+      />
+      <Input
+        label="Email"
+        type="email"
+        {...register('email', { required: 'Email is required' })}
+        error={errors.email?.message}
+      />
+      {!shopkeeper &&
         <Input
-          label="Name"
-          name="name"
-          register={register}
-          error={errors.name}
-          required
+          label="Password"
+          type="password"
+          {...register('password', { required: shopkeeper ? false : 'Password is required' })}
+          error={errors.password?.message}
         />
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          register={register}
-          error={errors.email}
-          required
-        />
-        <Input
-          label="Phone"
-          name="phone"
-          register={register}
-          error={errors.phone}
-        />
-        {!user && (
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            register={register}
-            error={errors.password}
-            required
-          />
-        )}
-        <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>
-            {user ? 'Update' : 'Create'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+      }
+      <Input
+        label="Phone"
+        {...register('phone', { required: 'Phone is required' })}
+        error={errors.phone?.message}
+      />
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? 'Saving...' : 'Save'}
+        </Button>
+      </div>
+    </form>
   )
 }
 
-export default UsersPage
+export default ShopkeepersPage

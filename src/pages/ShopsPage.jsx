@@ -7,6 +7,7 @@ import {
   flexRender 
 } from '@tanstack/react-table'
 import { Search, CheckCircle, XCircle } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { shopsApi } from '../api/shops'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -26,6 +27,10 @@ const ShopsPage = () => {
     mutationFn: shopsApi.approveShop,
     onSuccess: () => {
       queryClient.invalidateQueries(['shops'])
+      toast.success('Shop approved successfully')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to approve shop')
     },
   })
 
@@ -33,6 +38,10 @@ const ShopsPage = () => {
     mutationFn: (id) => shopsApi.rejectShop(id, 'Does not meet requirements'),
     onSuccess: () => {
       queryClient.invalidateQueries(['shops'])
+      toast.success('Shop rejected successfully')
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to reject shop')
     },
   })
 
