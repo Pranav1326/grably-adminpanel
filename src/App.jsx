@@ -10,9 +10,7 @@ import NotificationsPage from './pages/NotificationsPage'
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  
-  console.log('ProtectedRoute: isAuthenticated =', isAuthenticated)
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
@@ -22,8 +20,6 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  
-  console.log('App: isAuthenticated =', isAuthenticated)
 
   return (
     <Routes>

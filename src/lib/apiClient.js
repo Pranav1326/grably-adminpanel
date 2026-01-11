@@ -1,8 +1,8 @@
 import axios from 'axios'
 import { getAuthToken, clearAuth } from '../store/authStore'
 
-// Base URL from environment or fallback
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+// Base URL from environment or fallback to admin service
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5004'
 
 // Create axios instance
 const apiClient = axios.create({
